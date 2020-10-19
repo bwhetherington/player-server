@@ -40,35 +40,51 @@ exports.__esModule = true;
 exports.initServer = void 0;
 var express = require("express");
 var db_1 = require("./db");
+var morgan = require("morgan");
 var path = require("path");
 var util_1 = require("./util");
 var auth_1 = require("./auth");
 var account_1 = require("./account");
 var port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3030;
+var DISALLOWED_PASSWORDS = [
+    'password'
+];
+function isDisallowedPassword(password) {
+    return DISALLOWED_PASSWORDS.includes(password.toLowerCase());
+}
+function isValidPassword(password) {
+    return password.length >= 6 && !isDisallowedPassword(password);
+}
 function initServer() {
     return __awaiter(this, void 0, void 0, function () {
-        var db, app;
+        var db, app, isAuthenticated;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, db_1.initDb()];
                 case 1:
                     db = _a.sent();
-                    console.log('database initialized');
                     app = express();
+                    app.use(morgan('tiny'));
                     app.use(express.urlencoded({
                         extended: true
                     }));
                     app.use(express.json());
                     app.use(auth_1.authenticate(db));
+                    isAuthenticated = function (req, res, next) {
+                        if (req.user) {
+                            next();
+                        }
+                        else {
+                            res.status(401).json({ message: 'Not authenticated.' });
+                        }
+                    };
                     app.get('/user/:username', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
                         var username, player, view;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    console.log(req.user);
                                     username = req.params.username;
-                                    console.log('GET', username);
                                     if (!username) return [3 /*break*/, 2];
                                     return [4 /*yield*/, db.collection('accounts')
                                             .findOne({ username: username })];
@@ -87,19 +103,22 @@ function initServer() {
                                     res.status(404);
                                     res.send('404: User not found');
                                     _a.label = 3;
-                                case 3:
-                                    console.log('end');
-                                    return [2 /*return*/];
+                                case 3: return [2 /*return*/];
                             }
                         });
                     }); });
                     app.post('/register', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-                        var _a, username, password, passwordHash, account;
+                        var _a, username, password, passwordHash, account, view;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
                                 case 0:
                                     _a = req.body, username = _a.username, password = _a.password;
                                     if (!(typeof username === 'string' && typeof password === 'string')) return [3 /*break*/, 4];
+                                    // Check if password is valid
+                                    if (!isValidPassword(password)) {
+                                        res.status(409).json({ message: 'Selected password is invalid' });
+                                        return [2 /*return*/];
+                                    }
                                     return [4 /*yield*/, db.collection('accounts').findOne({ username: username })];
                                 case 1:
                                     // Check if account with this username already exists
@@ -111,7 +130,7 @@ function initServer() {
                                 case 2:
                                     passwordHash = _b.sent();
                                     account = {
-                                        username: username,
+                                        username: username.toLowerCase(),
                                         passwordHash: passwordHash,
                                         className: 'Hero',
                                         xp: 0,
@@ -121,7 +140,8 @@ function initServer() {
                                             .insertOne(account)];
                                 case 3:
                                     _b.sent();
-                                    res.status(201).json(req.body);
+                                    view = db_1.createAccountView(account);
+                                    res.status(200).json(view);
                                     return [3 /*break*/, 5];
                                 case 4:
                                     res.status(400).json({ message: 'Account username or password was not properly specified.' });
@@ -132,7 +152,6 @@ function initServer() {
                     }); });
                     app.get('/login', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
-                            console.log('login', req.user);
                             if (req.user) {
                                 res.status(200).json(req.user);
                             }
@@ -142,24 +161,26 @@ function initServer() {
                             return [2 /*return*/];
                         });
                     }); });
-                    app.post('/update', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
+                    app.post('/update', isAuthenticated, function (req, res) { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    console.log('update', req.user, req.body);
-                                    if (!account_1.isAccount(req.body)) return [3 /*break*/, 2];
+                                    if (!(account_1.isAccount(req.body) && req.user.username === req.body.username)) return [3 /*break*/, 2];
                                     return [4 /*yield*/, db.collection('accounts')
                                             .findOneAndUpdate({ username: req.user.username }, { $set: req.body })];
                                 case 1:
                                     _a.sent();
-                                    _a.label = 2;
-                                case 2: return [2 /*return*/];
+                                    res.status(200).json({ message: 'User updated successfully.' });
+                                    return [3 /*break*/, 3];
+                                case 2:
+                                    res.status(401).json({ message: 'Unauthorized access.' });
+                                    _a.label = 3;
+                                case 3: return [2 /*return*/];
                             }
                         });
                     }); });
                     app.get('/', function (req, res) {
                         var file = path.join(__dirname, '..', 'index.html');
-                        console.log(file);
                         res.sendFile(file);
                     });
                     return [2 /*return*/, app];

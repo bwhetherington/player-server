@@ -47,7 +47,6 @@ function authenticate(db) {
             switch (_d.label) {
                 case 0:
                     if (!(typeof ((_c = req === null || req === void 0 ? void 0 : req.headers) === null || _c === void 0 ? void 0 : _c.authorization) === 'string')) return [3 /*break*/, 2];
-                    console.log(req.headers.authorization);
                     _a = req.headers.authorization.split(/\s+/), type = _a[0], data = _a[1];
                     if (!(type === 'Basic' && typeof data === 'string')) return [3 /*break*/, 2];
                     buf = Buffer.from(data, 'base64');

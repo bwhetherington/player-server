@@ -48,7 +48,7 @@ function main() {
                     server = _b.sent();
                     port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3030;
                     server.listen(port, function () {
-                        console.log('listening on ' + port);
+                        console.log('listening on port ' + port);
                     });
                     return [2 /*return*/];
             }

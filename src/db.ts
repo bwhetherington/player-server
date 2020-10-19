@@ -1,12 +1,20 @@
-import * as mongo from 'mongodb';
-import { hashPassword, comparePassword } from './util';
-import { Account } from './account';
+import * as mongo from "mongodb";
+import { hashPassword, comparePassword } from "./util";
+import { Account } from "./account";
 
 let uri = undefined as string | undefined;
 function getURI(): string {
   if (!uri) {
-    uri = `mongodb://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@bwhetherington.com:27017`;
+    uri = "mongodb://";
+    if (process.env.MONGODB_USERNAME && process.env.MONGODB_PASSWORD) {
+      uri +=
+        process.env.MONGODB_USERNAME + ":" + process.env.MONGODB_PASSWORD + "@";
+    }
+    uri += `${process.env.MONGODB_HOST ?? "localhost"}:${
+      process.env.MONGODB_PORT ?? 27017
+    }`;
   }
+  console.log(uri);
   return uri;
 }
 
@@ -14,7 +22,7 @@ let connection = undefined as mongo.MongoClient | undefined;
 
 const MONGO_SETTINGS = {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 };
 
 export async function connect(): Promise<mongo.MongoClient | undefined> {
@@ -38,27 +46,37 @@ export function createAccountView(account: Password<Account>): Account {
 
 export async function initDb(): Promise<mongo.Db> {
   const client = await connect();
-  const playerdb = client.db('playerdb');
+  const playerdb = client.db("playerdb");
 
   // Initialize admin account
   const admin: Password<Account> = {
-    username: 'admin',
-    passwordHash: await hashPassword('admin'),
+    username: "admin",
+    passwordHash: await hashPassword("admin"),
     xp: 500,
-    className: 'Hero',
+    className: "Hero",
     permissionLevel: 1,
   };
 
-  await playerdb.collection('accounts')
-    .updateOne({ username: 'admin' }, { $setOnInsert: admin }, { upsert: true });
+  await playerdb
+    .collection("accounts")
+    .updateOne(
+      { username: "admin" },
+      { $setOnInsert: admin },
+      { upsert: true }
+    );
 
   return playerdb;
 }
 
-export async function login(username: string, password: string, db: mongo.Db): Promise<Account | undefined> {
-  const player = await db.collection('accounts')
+export async function login(
+  username: string,
+  password: string,
+  db: mongo.Db
+): Promise<Account | undefined> {
+  const player = await db
+    .collection("accounts")
     .findOne({ username: username.toLowerCase() });
-  if (player && typeof player.passwordHash === 'string') {
+  if (player && typeof player.passwordHash === "string") {
     if (await comparePassword(password, player.passwordHash)) {
       return createAccountView(player);
     }
