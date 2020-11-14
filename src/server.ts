@@ -3,7 +3,7 @@ import { initDb, createAccountView, Password } from './db';
 import * as morgan from 'morgan';
 import * as path from 'path';
 import { hashPassword } from './util';
-import { authenticate, AuthRequest } from './auth';
+import { authenticate, AuthRequest, isAuthenticated, hasDBAccess } from './auth';
 import { Account, isAccount } from './account';
 
 const port = process.env.PORT ?? 3030;
@@ -30,14 +30,6 @@ export async function initServer(): Promise<express.Express> {
   }));
   app.use(express.json());
   app.use(authenticate(db));
-
-  const isAuthenticated: express.RequestHandler = (req: AuthRequest, res, next) => {
-    if (req.user) {
-      next();
-    } else {
-      res.status(401).json({ message: 'Not authenticated.' });
-    }
-  };
 
   app.get('/user/:username', async (req: AuthRequest, res) => {
     const { username } = req.params as { username?: string };
@@ -93,7 +85,6 @@ export async function initServer(): Promise<express.Express> {
     } else {
       res.status(400).json({ message: 'Account username or password was not properly specified.' });
     }
-
   });
 
   app.get('/login', async (req: AuthRequest, res) => {
@@ -104,8 +95,9 @@ export async function initServer(): Promise<express.Express> {
     }
   });
 
-  app.post('/update', isAuthenticated, async (req: AuthRequest, res) => {
-    if (isAccount(req.body) && req.user.username === req.body.username) {
+  app.post('/update', hasDBAccess, async (req: AuthRequest, res) => {
+    // Check that the validated user is the same as the user being updated
+    if (isAccount(req.body)) {
       await db.collection('accounts')
         .findOneAndUpdate({ username: req.user.username }, { $set: req.body });
       res.status(200).json({ message: 'User updated successfully.' });

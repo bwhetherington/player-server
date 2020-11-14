@@ -28,7 +28,15 @@ export function authenticate(db: mongo.Db): express.RequestHandler {
   };
 }
 
-const isAuthenticated: express.RequestHandler = (req: AuthRequest, res, next) => {
+export const hasDBAccess: express.RequestHandler = (req: AuthRequest, res, next) => {
+  if (req.user && req.user.permissionLevel >= 2) {
+    next();
+  } else {
+    res.status(401).json({ message: 'You are not authorized for database access.' });
+  }
+};
+
+export const isAuthenticated: express.RequestHandler = (req: AuthRequest, res, next) => {
   if (req.user) {
     next();
   } else {

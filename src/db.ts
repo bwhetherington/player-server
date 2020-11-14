@@ -44,9 +44,9 @@ export async function initDb(): Promise<mongo.Db> {
   const admin: Password<Account> = {
     username: 'admin',
     passwordHash: await hashPassword('admin'),
-    xp: 500,
+    xp: 0,
     className: 'Hero',
-    permissionLevel: 1,
+    permissionLevel: 2,
   };
 
   await playerdb.collection('accounts')

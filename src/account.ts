@@ -1,8 +1,12 @@
-
 export interface Account {
   username: string;
   className: string;
   xp: number;
+
+  // Permission levels:
+  // 0: normal user
+  // 1: in-game admin commands
+  // 2: db access
   permissionLevel: number;
 }
 
