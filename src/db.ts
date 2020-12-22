@@ -5,10 +5,9 @@ import { Account } from "./account";
 let uri = undefined as string | undefined;
 function getURI(): string {
   if (!uri) {
-    const isSrv = process.env.MONGODB_PORT === undefined;
     uri = "mongodb";
-    if (isSrv) {
-      // uri += "+srv";
+    if (process.env.MONGODB_SRV) {
+      uri += "+srv";
     }
     uri += "://";
     if (process.env.MONGODB_USERNAME && process.env.MONGODB_PASSWORD) {
@@ -16,10 +15,12 @@ function getURI(): string {
         process.env.MONGODB_USERNAME + ":" + process.env.MONGODB_PASSWORD + "@";
     }
     uri += `${process.env.MONGODB_HOST ?? "localhost"}`;
-    if (process.env.MONGODB_PORT) {
+    if (!process.env.MONGODB_SRV) {
+      const port = process.env.MONGODB_PORT ?? 27017;
       uri += `:${process.env.MONGODB_PORT}`;
     }
     uri += '?retryWrites=true&w=majority';
+    console.log(uri);
   }
   return uri;
 }
