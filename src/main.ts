@@ -1,12 +1,8 @@
-import { initServer } from './server';
+import main from '.';
 
-async function main(): Promise<void> {
-  const server = await initServer();
+main().then((server) => {
   const port = process.env.PORT ?? 3030;
-
   server.listen(port, () => {
     console.log('listening on port ' + port);
   });
-}
-
-main().catch(console.error);
+});

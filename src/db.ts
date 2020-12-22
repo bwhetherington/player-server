@@ -5,16 +5,23 @@ import { Account } from "./account";
 let uri = undefined as string | undefined;
 function getURI(): string {
   if (!uri) {
-    uri = "mongodb://";
+    const isSrv = process.env.MONGODB_PORT === undefined;
+    uri = "mongodb";
+    if (isSrv) {
+      // uri += "+srv";
+    }
+    uri += "://";
     if (process.env.MONGODB_USERNAME && process.env.MONGODB_PASSWORD) {
       uri +=
         process.env.MONGODB_USERNAME + ":" + process.env.MONGODB_PASSWORD + "@";
     }
-    uri += `${process.env.MONGODB_HOST ?? "localhost"}:${
-      process.env.MONGODB_PORT ?? 27017
-    }`;
+    uri += `${process.env.MONGODB_HOST ?? "localhost"}`;
+    if (process.env.MONGODB_PORT) {
+      uri += `:${process.env.MONGODB_PORT}`;
+    }
+    uri += '?retryWrites=true&w=majority';
+    console.log(uri);
   }
-  console.log(uri);
   return uri;
 }
 
@@ -50,19 +57,11 @@ export async function initDb(): Promise<mongo.Db> {
 
   // Initialize admin account
   const admin: Password<Account> = {
-<<<<<<< HEAD
     username: 'admin',
     passwordHash: await hashPassword('admin'),
     xp: 0,
     className: 'Hero',
     permissionLevel: 2,
-=======
-    username: "admin",
-    passwordHash: await hashPassword("admin"),
-    xp: 500,
-    className: "Hero",
-    permissionLevel: 1,
->>>>>>> f193f354e00cb45fe16848d8c0f1d5baf8324054
   };
 
   await playerdb

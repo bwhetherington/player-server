@@ -26,6 +26,7 @@
     "express": "^4.17.1",
     "mongodb": "^3.6.2",
     "morgan": "^1.10.0",
+    "serverless": "^2.16.1",
     "ts-node": "^9.0.0"
   }
 }
