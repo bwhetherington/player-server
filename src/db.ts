@@ -20,7 +20,6 @@ function getURI(): string {
       uri += `:${process.env.MONGODB_PORT}`;
     }
     uri += '?retryWrites=true&w=majority';
-    console.log(uri);
   }
   return uri;
 }
