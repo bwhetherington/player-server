@@ -50,7 +50,19 @@ exports.__esModule = true;
 exports.login = exports.initDb = exports.createAccountView = exports.connect = void 0;
 var mongo = require("mongodb");
 var util_1 = require("./util");
-var URI = "mongodb://bwh-server.local:27017";
+var uri = undefined;
+function getURI() {
+    var _a, _b;
+    if (!uri) {
+        uri = "mongodb://";
+        if (process.env.MONGODB_USERNAME && process.env.MONGODB_PASSWORD) {
+            uri +=
+                process.env.MONGODB_USERNAME + ":" + process.env.MONGODB_PASSWORD + "@";
+        }
+        uri += ((_a = process.env.MONGODB_HOST) !== null && _a !== void 0 ? _a : "localhost") + ":" + ((_b = process.env.MONGODB_PORT) !== null && _b !== void 0 ? _b : 27017);
+    }
+    return uri;
+}
 var connection = undefined;
 var MONGO_SETTINGS = {
     useNewUrlParser: true,
@@ -65,8 +77,8 @@ function connect() {
                     if (connection) {
                         return [2 /*return*/, connection];
                     }
-                    if (!URI) return [3 /*break*/, 2];
-                    return [4 /*yield*/, mongo.MongoClient.connect(URI, MONGO_SETTINGS)];
+                    if (!getURI()) return [3 /*break*/, 2];
+                    return [4 /*yield*/, mongo.MongoClient.connect(getURI(), MONGO_SETTINGS)];
                 case 1:
                     client = _a.sent();
                     connection = client;
@@ -92,19 +104,20 @@ function initDb() {
                 case 0: return [4 /*yield*/, connect()];
                 case 1:
                     client = _b.sent();
-                    playerdb = client.db('playerdb');
+                    playerdb = client.db("playerdb");
                     _a = {
-                        username: 'admin'
+                        username: "admin"
                     };
-                    return [4 /*yield*/, util_1.hashPassword('admin')];
+                    return [4 /*yield*/, util_1.hashPassword("admin")];
                 case 2:
                     admin = (_a.passwordHash = _b.sent(),
                         _a.xp = 500,
-                        _a.className = 'Hero',
+                        _a.className = "Hero",
                         _a.permissionLevel = 1,
                         _a);
-                    return [4 /*yield*/, playerdb.collection('accounts')
-                            .findOneAndReplace({ username: 'admin' }, admin)];
+                    return [4 /*yield*/, playerdb
+                            .collection("accounts")
+                            .updateOne({ username: "admin" }, { $setOnInsert: admin }, { upsert: true })];
                 case 3:
                     _b.sent();
                     return [2 /*return*/, playerdb];
@@ -118,11 +131,12 @@ function login(username, password, db) {
         var player;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, db.collection('accounts')
-                        .findOne({ username: username })];
+                case 0: return [4 /*yield*/, db
+                        .collection("accounts")
+                        .findOne({ username: username.toLowerCase() })];
                 case 1:
                     player = _a.sent();
-                    if (!(player && typeof player.passwordHash === 'string')) return [3 /*break*/, 3];
+                    if (!(player && typeof player.passwordHash === "string")) return [3 /*break*/, 3];
                     return [4 /*yield*/, util_1.comparePassword(password, player.passwordHash)];
                 case 2:
                     if (_a.sent()) {

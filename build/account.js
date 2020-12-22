@@ -2,7 +2,6 @@
 exports.__esModule = true;
 exports.isAccount = void 0;
 function isAccount(x) {
-    console.log('isAccount', x);
     if (x) {
         var username = x.username, className = x.className, xp = x.xp, permissionLevel = x.permissionLevel;
         return ((username === undefined || typeof username === 'string') &&
