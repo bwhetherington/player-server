@@ -17,7 +17,7 @@ function getURI(): string {
     uri += `${process.env.MONGODB_HOST ?? "localhost"}`;
     if (!process.env.MONGODB_SRV) {
       const port = process.env.MONGODB_PORT ?? 27017;
-      uri += `:${process.env.MONGODB_PORT}`;
+      uri += `:${port}`;
     }
     uri += '?retryWrites=true&w=majority';
     console.log(uri);
