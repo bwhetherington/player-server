@@ -95,9 +95,9 @@ export async function initServer(): Promise<express.Express> {
 
   app.post('/update', hasDBAccess, async (req: AuthRequest, res) => {
     // Check that the validated user is the same as the user being updated
-    if (isAccount(req.body)) {
+    if (isAccount(req.body) && req.body.username) {
       await db.collection('accounts')
-        .findOneAndUpdate({ username: req.user.username }, { $set: req.body });
+        .findOneAndUpdate({ username: req.body.username }, { $set: req.body });
       res.status(200).json({ message: 'User updated successfully.' });
     } else {
       res.status(401).json({ message: 'Unauthorized access.' });
