@@ -40,10 +40,10 @@ export async function initServer(): Promise<express.Express> {
         const view = createAccountView(player);
         res.json(view);
       } else {
-        res.status(404).json({ message: `User '${username} not found` });
+        res.status(404).json({ message: `User '${username}' not found` });
       }
     } else {
-      res.status(404).json({ message: `User '${username} not found` });
+      res.status(404).json({ message: `User '${username}' not found` });
     }
   });
 
